@@ -1,10 +1,12 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { seal, unseal } from './security.mjs';
 
 const cents = value => value === null || value === undefined ? null : Math.round(Number(value) * 100);
 const isoNow = () => new Date().toISOString();
+const hashSession = token => createHash('sha256').update(token).digest('hex');
 export function monthBounds(month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Invalid month');
   const [year, mon] = month.split('-').map(Number);
@@ -27,10 +29,23 @@ export class Store {
       'CREATE TABLE IF NOT EXISTS items (item_id TEXT PRIMARY KEY, encrypted_token TEXT NOT NULL, institution TEXT NOT NULL DEFAULT "Linked institution", cursor TEXT, status TEXT NOT NULL DEFAULT "connected", updated_at TEXT NOT NULL);',
       'CREATE TABLE IF NOT EXISTS accounts (account_id TEXT PRIMARY KEY, item_id TEXT NOT NULL REFERENCES items(item_id), name TEXT NOT NULL, mask TEXT, type TEXT NOT NULL, subtype TEXT, currency TEXT, current_cents INTEGER, available_cents INTEGER, limit_cents INTEGER, updated_at TEXT NOT NULL);',
       'CREATE TABLE IF NOT EXISTS transactions (transaction_id TEXT PRIMARY KEY, item_id TEXT NOT NULL REFERENCES items(item_id), account_id TEXT NOT NULL, date TEXT NOT NULL, name TEXT NOT NULL, merchant TEXT, amount_cents INTEGER NOT NULL, pending INTEGER NOT NULL, category TEXT NOT NULL, detail TEXT, currency TEXT, updated_at TEXT NOT NULL);',
+      'CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL);',
       'CREATE INDEX IF NOT EXISTS tx_date_idx ON transactions(date);',
       'CREATE INDEX IF NOT EXISTS tx_account_idx ON transactions(account_id);',
       'CREATE INDEX IF NOT EXISTS tx_item_idx ON transactions(item_id);'
     ].join('\n'));
+  }
+  issueSession(token) {
+    const expires = Number(token.split('.')[1]);
+    this.db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(Math.floor(Date.now()/1000));
+    this.db.prepare('INSERT INTO sessions(token_hash,expires_at) VALUES (?,?)').run(hashSession(token), expires);
+  }
+  isSessionActive(token) {
+    return !!this.db.prepare('SELECT token_hash FROM sessions WHERE token_hash=? AND expires_at>=?')
+      .get(hashSession(token), Math.floor(Date.now()/1000));
+  }
+  revokeSession(token) {
+    this.db.prepare('DELETE FROM sessions WHERE token_hash=?').run(hashSession(token));
   }
   close() { this.db.close(); }
   items() {
