@@ -96,12 +96,12 @@ export class Store {
     if (search) { clause += ' AND (name LIKE ? OR merchant LIKE ?)'; values.push('%' + search + '%', '%' + search + '%'); }
     const excluded = "('INCOME','TRANSFER_IN','TRANSFER_OUT','LOAN_PAYMENTS')";
     const groups = this.db.prepare('SELECT category,SUM(amount_cents) AS amount_cents FROM transactions' +
-      clause + " AND pending=0 AND (currency IS NULL OR currency='USD') AND category NOT IN " + excluded +
+      clause + " AND pending=0 AND currency='USD' AND category NOT IN " + excluded +
       ' GROUP BY category HAVING SUM(amount_cents) != 0 ORDER BY amount_cents DESC').all(...values);
     const transactions = this.db.prepare('SELECT transaction_id,account_id,date,name,merchant,amount_cents,pending,category,detail,currency FROM transactions' +
       clause + ' ORDER BY date DESC,transaction_id DESC LIMIT 75').all(...values);
     const firstTrend = previousMonths(month, 6)[0] + '-01';
-    const trendWhere = " AND (currency IS NULL OR currency='USD')" + (account ? ' AND account_id=?' : '') +
+    const trendWhere = " AND currency='USD'" + (account ? ' AND account_id=?' : '') +
       (search ? ' AND (name LIKE ? OR merchant LIKE ?)' : '');
     const trendArgs = [firstTrend, end, ...(account ? [account] : []),
       ...(search ? ['%' + search + '%', '%' + search + '%'] : [])];
@@ -110,12 +110,12 @@ export class Store {
       trendWhere + ' GROUP BY substr(date,1,7)').all(...trendArgs);
     const byMonth = Object.fromEntries(trend.map(r => [r.month, r.spent]));
     const months = previousMonths(month, 6).map(m => ({month: m, amount_cents: byMonth[m] || 0}));
-    const cash = accounts.filter(a => a.type === 'depository' && (!a.currency || a.currency === 'USD'));
-    const debt = accounts.filter(a => a.type === 'credit' && (!a.currency || a.currency === 'USD'));
+    const cash = accounts.filter(a => a.type === 'depository' && (a.currency === 'USD'));
+    const debt = accounts.filter(a => a.type === 'credit' && (a.currency === 'USD'));
     const total = rows => rows.reduce((sum, a) => sum + (a.current_cents || 0), 0);
     return {
       month, items: this.items(), accounts, transactions, categories: groups, months,
-      balancesIncomplete: accounts.some(a => a.current_cents === null || (a.currency && a.currency !== 'USD')),
+      balancesIncomplete: accounts.some(a => a.current_cents === null || a.currency !== 'USD'),
       totals: {cash_cents: total(cash), card_debt_cents: total(debt),
         net_liquid_cents: total(cash) - total(debt),
         spending_cents: groups.reduce((sum, g) => sum + g.amount_cents, 0)},
