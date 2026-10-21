@@ -65,6 +65,10 @@ The runner writes logs (including counterexamples), input/tool hashes and state 
 
 The PostgreSQL suite additionally executes every length-three sequence over the six request shapes (**216 sequences / 648 refreshes**) against an independent set-based oracle. A second test uses independently checked-out database connections, verifies private writes are invisible, observes same-Item lock waiting, allows another Item to commit, then checks that the waiting worker reads the preceding committed cursor/history. These strengthen implementation correspondence; neither exhaustive short traces nor a scheduled concurrency example is an unbounded implementation proof.
 
+## Executed evidence
+
+[CI run 39662433777](https://github.com/larsbx/the-bridge/actions/runs/39662433777) passed both formal and PostgreSQL jobs on `5be28522a1e4d141318c3c43c05dc74f2e91d73d`: **142,884 reachable model states**, all **6 expected counterexamples**, and **26 implementation tests**, including the 216-sequence oracle and real advisory-lock wait. The model completed its finite state graph; the implementation suite does not exhaust all schedules or inputs.
+
 ## Sources
 
 - [TLA+ model checking](https://nightly.tlapl.us/doc/model/model.html)

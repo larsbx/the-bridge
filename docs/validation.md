@@ -48,7 +48,13 @@ The HTTP integration suite exercises valid session reads, CSRF and fixed-Origin 
 
 The [formal specification and correspondence map](../formal/README.md) now define the reconciliation safety contract. The pinned TLC 1.7.4 run completed locally with **142,884 distinct reachable states** and no invariant violations. All six deliberately broken variants produced the required named invariant violation and a counterexample; parser errors and timeouts are rejected. Tool/input hashes and exact counts are recorded in `formal/evidence.json`.
 
-The application unit/security suite still passes (12 tests). The new PostgreSQL tests enumerate 216 length-three request sequences (648 refreshes) and exercise separate-connection lock waiting/private-write visibility. They are compiled locally; their database execution is delegated to the PostgreSQL CI service because of the local runner restriction described above. The dedicated `formal` CI job independently reruns the model and negative controls and retains logs as an artifact.
+[Run 39662433777](https://github.com/larsbx/the-bridge/actions/runs/39662433777) passed both jobs on commit `5be28522a1e4d141318c3c43c05dc74f2e91d73d`:
+
+- `formal`: 142,884 reachable states checked; all six negative controls produced their required counterexamples. Eight evidence files were uploaded as `reconciliation-model-evidence`.
+- `test`: **26 tests, 0 failures** in 6.7 seconds, including all 216 length-three model request sequences (648 refreshes) and the real separate-connection lock-wait/private-write visibility test.
+- Compilation, formatting, schema drift, migrations, frontend checks, JavaScript budget and dependency security checks passed again. First-party browser JavaScript remains 1,349 bytes gzip.
+
+The local unit/security suite also passed (12 tests). Database execution used the CI PostgreSQL service because of the local runner restriction described above. This later record supersedes the earlier 24-test baseline for the expanded suite.
 
 This is a finite safety model check and concrete implementation correspondence testing, not a verified compiler, an unbounded proof of the Elixir implementation, a liveness theorem, or live Plaid acceptance.
 
