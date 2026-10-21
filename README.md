@@ -1,102 +1,93 @@
-# The Bridge — private financial dashboard
+# The Bridge
 
-A self-hosted **Server-Sent Events (SSE)** financial dashboard backed by a **direct Plaid integration**. The first slice is deliberately single-owner, read-only and deployable in Plaid Sandbox. It exposes no transfer, payment-initiation or trading functionality.
+Private, single-owner, read-only Plaid dashboard built with **Elixir, Ash 3, AshPostgres and SvelteKit**. PostgreSQL stores the ledger; Bandit/Plug serves the application. No Node server, Clojure or Datastar runtime is used.
 
-The Bridge does **not** reuse the Plaid connection established inside ChatGPT Finances. A separate Plaid Link authorization is required for this app. Never put Plaid secrets, bank access tokens, copied transactions or live financial records into this public repository.
+## Browser budget
 
-## Capabilities
+SvelteKit builds the page shell with `prerender = true` and **`csr = false`**. Elixir renders authenticated financial HTML into that shell and serves refresh fragments. This is intentionally not a hydrated Svelte SPA or a SvelteKit Node backend. Forms, filters and existing financial views work without JavaScript. All accounting, authorization and financial rendering remain server-side.
 
-- Plaid Link creates a connection; the backend exchanges public tokens for server-only access tokens.
-- Access tokens are encrypted with AES-256-GCM in a local SQLite database. Secrets never reach the frontend or SSE payloads.
-- Transaction updates use Plaid's cursor-based Transactions Sync API (added, modified and removed transactions). All pages commit atomically. Pagination mutation restarts at the original cursor.
-- Signed Plaid webhooks are validated against Plaid verification keys, the JWT signature, a five-minute age window, and an exact SHA-256 of the incoming raw body.
-- Latest available checking/savings and credit-card balance snapshots, categorized monthly spending, a six-month trend, account filters, merchant search and a posted/pending transaction table.
-- SSE at GET /api/events informs authenticated browser clients that a refresh is available; clients then fetch GET /api/snapshot. Heartbeats and native EventSource reconnection work without polling the browser.
-- Single-owner password sign-in, HMAC-signed HTTP-only sessions with server-side revocation on logout, CSRF protection, strict same-site cookies, basic login throttling and a restrictive Content Security Policy.
-- Tests cover encryption, authentication primitives, transaction idempotency, database rollback, pagination-mutation recovery and signed webhooks.
+The only first-party browser script progressively adds SSE invalidation/refetch and Plaid Link. The build enforces a **2 KiB gzip budget** and rejects accidental Svelte hydration. There is no chart library, client store, browser financial cache, service worker or client-side accounting. Charts use native HTML progress elements with explicit numeric values. Plaid's third-party SDK is fetched only after Connect/Reconnect is clicked; its size is outside our budget.
 
-**Scope limits:** This is an initial audited-code candidate, not an approved production deployment. Spending excludes Plaid transactions categorized as income, recognized transfers and loan payments, and excludes pending transactions. Net spending includes refunds. The balance card shows checking/savings snapshots less reported credit-card balances; it is **not** net worth, live available cash, or affordability advice. The snapshot can be incomplete when the bank or Plaid has not returned a balance. USD totals include only records explicitly denominated in USD; balances and transactions with unknown or other currencies are not silently treated as USD. No exchange-rate conversion is provided; add currency partitioning before supporting international accounts.
+## Reconciliation contract
 
-## Local quickstart (Sandbox)
+Each refresh consumes an **unfiltered, complete `/accounts/get` response** whose Item ID matches the requested Item. A missing/null/malformed account array, duplicate identifier, mismatched Item or failed API response is an error, never an empty snapshot. The request deliberately sends no account-ID selection options.
 
-Requires **Node.js 22.13+** (tested by CI with Node 22.16; uses the built-in node:sqlite module). No npm dependencies are required.
+A PostgreSQL transaction-scoped advisory lock serializes the fetch and commit for an Item, including across application instances. Account reconciliation, all transaction pages and the final cursor commit together. A failed validation or write rolls everything back. Reads use a repeatable-read snapshot so the dashboard cannot combine portions of two committed refreshes.
 
-1. Copy **.env.example** to **.env**.
-2. Create a Plaid developer account and put your **Sandbox** PLAID_CLIENT_ID and PLAID_SECRET in .env.
-3. Set DASHBOARD_PASSWORD to a long unique passphrase (at least 16 characters).
-4. Generate **two different** cryptographic keys, one for SESSION_KEY and one for DATA_KEY, with:
+- Present accounts are inserted/updated and marked active.
+- Previously active accounts absent from a complete snapshot become inactive with `removed_at`; an empty array retires all accounts for that Item.
+- Current cards and USD balance totals include **active accounts only**.
+- Account rows and their transactions are retained. Historical transactions remain searchable, appear with a historical label and remain in spending calculations.
+- A new account ID is treated as a new identity. The application does not guess identity equivalence or reassign old transactions. Reappearance of the same ID reactivates its account.
+- Both account and transaction primary keys include `item_id`. One Item's snapshot, pending replacement or removal cannot alter another Item's records.
+- Repeated snapshots do not duplicate balances or transactions, and repeated absence preserves the original removal timestamp.
+- Plaid's explicit transaction removals still remove those transaction records, including historical ones. Pending-to-posted replacement remains Item-scoped.
 
-   ~~~sh
-   openssl rand -hex 32
-   openssl rand -hex 32
-   ~~~
+Account churn alone cannot prove duplicate transaction identity. Cross-ID/cross-Item transaction deduplication and detecting separately linked duplicates require a separate reconciliation policy; no unsupported matching is applied here.
 
-5. Start the app:
+## Security boundaries
 
-   ~~~sh
-   node --env-file=.env src/server.mjs
-   ~~~
+Ash resources require authorization by default. Only the server's sync principal can mutate financial resources; the authenticated owner can read. HTTP bodies cannot supply actor roles. Responses project explicit public fields, never token ciphertext or plaintext. AES-256-GCM access tokens stay server-side. The versioned ciphertext format remains compatible with the old token encoding, but this does not constitute a database migration.
 
-6. Open **http://localhost:3000**, sign in with the passphrase, and click **Connect bank** to complete Plaid Link. Use Plaid Sandbox institutions/test credentials; do not connect live bank accounts while evaluating the first slice.
+Sessions are HMAC-signed, 12-hour, HttpOnly, SameSite=Strict cookies with server-side hashed session records and revocation. HTTPS enables Secure cookies. Mutations require an exact configured Origin plus session-bound CSRF protection. Login attempts are serialized and rate-limited by the actual peer address; forwarded headers are not trusted. Password comparisons use PBKDF2-HMAC-SHA256 and constant-time comparison. The single-owner password is an environment secret, not a multi-user identity system.
 
-For automated tests:
+SSE carries only refresh/sign-out notifications. Streams recheck session validity on updates and heartbeats, and close on logout/expiry. Financial HTML and API responses are `no-store`. CSP allows only self-hosted scripts and Plaid's official CDN; HTML data is escaped. Provider payloads, credentials and changesets are not logged by application error handlers.
 
-~~~sh
-npm run check
-npm test
-~~~
+Plaid webhooks require ES256/P-256 signature verification, a matching non-expired verification key, a five-minute issue-time window and an exact SHA-256 of the raw body. Transaction pagination mutation discards every collected page and retries from the original committed cursor, with bounded retries/pages. Failed pulls retain previous data and mark the Item for attention.
 
-**Environment configuration:**
+## Local Sandbox setup
 
-| Variable | Purpose |
-| --- | --- |
-| PLAID_ENV | sandbox (default) or production |
-| PLAID_CLIENT_ID / PLAID_SECRET | Server-side Plaid API credentials |
-| DASHBOARD_PASSWORD | Single-owner login secret, minimum 16 characters |
-| SESSION_KEY / DATA_KEY | Distinct 32-byte cryptographic keys encoded in hex |
-| DB_PATH | SQLite database path (default ./data/bridge.sqlite, ignored by Git) |
-| PORT | Listening TCP port (default 3000) |
-| HOST | Listening address (default 127.0.0.1; set 0.0.0.0 only behind a trusted HTTPS reverse proxy) |
-| PUBLIC_URL | Public HTTPS origin, required in production; used for Plaid webhooks and origin checks |
-| PLAID_REDIRECT_URI | Optional registered redirect URL for future OAuth flow support |
+Requirements: Elixir 1.19 / OTP 27, PostgreSQL 16, and Node 24 **for frontend builds only**. Dependencies are locked in `mix.lock` and `frontend/package-lock.json`.
 
-## HTTP and SSE surface
+1. Export the variables listed in `.env.example` through your secret manager or local shell. Mix does not automatically load `.env`.
+2. Supply separate Plaid **Sandbox** credentials. ChatGPT's Finances connection does not transfer credentials to this app.
+3. Generate two distinct keys with `openssl rand -hex 32`; keep `DATA_KEY` stable across restarts. Set a unique password of at least 16 characters.
+4. Build and start:
 
-| Endpoint | Method | Access | Purpose |
-| --- | --- | --- | --- |
-| / | GET | Public | UI shell |
-| /healthz | GET | Public | Health check only; no bank data |
-| /api/login | POST | Public, origin checked | Owner session |
-| /api/session | GET | Any | Authenticated state and session-scoped CSRF token |
-| /api/logout | POST | Owner + CSRF | Clear session cookie |
-| /api/plaid/link-token | POST | Owner + CSRF | Create initial/update Plaid Link token |
-| /api/plaid/exchange | POST | Owner + CSRF | Exchange public token, encrypt access token |
-| /api/snapshot | GET | Owner | Accounts, selected-month spending, trend and transactions |
-| /api/sync | POST | Owner + CSRF | Pull latest available Plaid balances and transaction updates |
-| /api/events | GET | Owner | SSE refresh notifications (no account data in events) |
-| /api/plaid/webhook | POST | Valid signed Plaid webhook | Schedule an incremental pull |
+```sh
+npm ci --prefix frontend --ignore-scripts
+npm run check --prefix frontend
+npm run build --prefix frontend
+mix deps.get --check-locked
+mix ecto.create
+mix ecto.migrate
+mix run --no-halt
+```
 
-POST requests from the browser require the expected same-origin Origin header. All authenticated POST requests also require an X-CSRF-Token header derived from the active signed session. EventSource uses the session cookie, and stream connections expire with the session. The Link browser SDK is loaded from the official Plaid CDN.
+Open the configured `PUBLIC_URL` (default `http://localhost:3000`). Sign in and connect a Sandbox institution. `PUBLIC_URL` is a fixed origin, not derived from an incoming Host header. Bind to loopback by default. For deployment, use HTTPS with an appropriately configured reverse proxy, secret management, encrypted database storage/backups and restricted network access. `MIX_ENV=prod` requires an HTTPS origin.
 
-## Operational architecture
+## Verification
 
-The server requests a Plaid link_token and sends it to the browser. Plaid Link returns a short-lived public_token. The server exchanges it once for an access_token and persists that token only as AES-256-GCM ciphertext. The server obtains account snapshots and paginated transaction changes using that token. A SQLite transaction applies each group of changes and its cursor together. Changes emit an SSE invalidation to authenticated clients, which retrieve the latest snapshot over HTTP.
+```sh
+MIX_ENV=test mix compile --warnings-as-errors
+MIX_ENV=test mix format --check-formatted
+MIX_ENV=test mix hex.audit
+npm audit --prefix frontend --audit-level=moderate
+MIX_ENV=test mix ecto.create
+MIX_ENV=test mix ecto.migrate
+MIX_ENV=test mix test
+# Crypto, webhook and parsing checks without PostgreSQL:
+MIX_ENV=test mix test --no-start test/unit
+```
 
-Plaid is not a continuous push stream of bank account activity. Plaid ingests financial-institution updates on its own schedule. A signed SYNC_UPDATES_AVAILABLE webhook or a user-triggered update prompts the server to pull what Plaid currently has. The server also checks on startup and every 15 minutes to recover from missed webhook notices. Because this slice does not yet have a durable job queue, a server interruption can defer updates until the next scheduled check; the persisted cursor prevents missing committed changes.
+The full suite uses PostgreSQL, not an in-memory substitute. CI provides a separate PostgreSQL 16 service. See `docs/validation.md` for actual executed evidence and remaining gates. A successful source build alone does not establish production readiness.
 
-**Security requirements for any public deployment:** use TLS termination and a dedicated host, encrypted persistent storage and backups for the SQLite file, protected environment secrets, filesystem permissions, process isolation, restricted inbound traffic and access logs without credentials or financial payloads. Preserve DATA_KEY across restarts: losing it makes the saved Plaid tokens undecryptable. Do not rotate keys by simply changing environment variables. This is a single-owner application; do not publish to multiple users without per-user authorization boundaries, separate Plaid Items and a security review.
+## Existing SQLite data
 
-## Explicit follow-on gates
+This PR changes the persistence engine. **No automatic SQLite-to-PostgreSQL import is implemented.** Existing SQLite files are neither opened nor deleted by the Elixir application. Back up the file and its `DATA_KEY`; do not relink and discard the old ledger as a substitute for migration. If a prior prototype has real or valuable data, an explicitly validated import of Items, accounts, transactions and cursors is an acceptance gate before cutover. Sessions should be reissued. Test historical preservation here concerns records in the new PostgreSQL ledger, not an unexecuted legacy import.
 
-1. Run the full tests under CI and conduct a security review (CSRF, login throttling behind proxies, session lifetime, key rotation, backup/deletion, webhook durability, dependency freshness and Plaid terms).
-2. Provide a supported OAuth redirect/resume flow for institutions that require OAuth. The optional redirect URI variable by itself does not complete that workflow.
-3. Build a durable webhook queue with retry/backoff and a migration framework before production, plus connection removal and access-token revocation.
-4. Add currency-aware aggregation, optional investments/liabilities/recurring product scopes, multi-owner identities and a transaction drilldown with pagination only after separate acceptance criteria.
-5. Add deployment/reverse-proxy examples and verify real Sandbox Link and webhook delivery end-to-end with operator-supplied Plaid credentials.
+## Remaining acceptance gates
 
-### References
+This is a review candidate, **not production-ready**. Require green PostgreSQL integration CI, security review and actual Plaid Sandbox evidence (Link, exchange, two Items, repeated sync, signed webhook delivery and relink). Account-ID churn should also be exercised with deterministic fixtures because Sandbox does not guarantee it can simulate every bank behavior.
 
-- Plaid Link API: https://plaid.com/docs/api/link/
-- Transactions Sync API: https://plaid.com/docs/api/products/transactions/
-- Plaid Transactions webhooks: https://plaid.com/docs/transactions/webhooks/
-- Plaid signed webhook verification: https://plaid.com/docs/api/webhooks/webhook-verification/
+OAuth redirect/resume, durable sync jobs with retry/backoff, connection removal/token revocation, key rotation, session cleanup, operational recovery, legacy import when applicable and broader deployment controls remain follow-up gates. The current supervised work queue is in memory; startup/15-minute polling recovers missed notices. Long-running pulls occupy a database connection while holding the Item lock; load testing and a durable queue are required before scaling beyond the private single-owner scope.
+
+USD aggregates exclude unknown/non-USD currencies; no FX conversion is performed. Spending excludes recognized income/transfers/loan payments and pending transactions, and includes refunds. Balances are latest snapshots, not live available funds, total net worth or affordability advice. There are no payment, transfer or trading endpoints.
+
+## References
+
+- [Plaid account snapshots](https://plaid.com/docs/api/accounts/)
+- [Plaid transaction sync](https://plaid.com/docs/api/products/transactions/)
+- [Plaid webhook verification](https://plaid.com/docs/api/webhooks/webhook-verification/)
+- [SvelteKit page options](https://svelte.dev/docs/kit/page-options)
+- [Ash policies](https://ash.hexdocs.pm/policies.html)

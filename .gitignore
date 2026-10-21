@@ -1,7 +1,12 @@
-node_modules/
-data/
 .env
 .env.*
 !.env.example
-.DS_Store
-coverage/
+data/
+*.sqlite*
+_build/
+deps/
+.elixir_ls/
+frontend/node_modules/
+frontend/.svelte-kit/
+priv/static/
+*.beam

@@ -1,0 +1,321 @@
+{
+  "checked_at": "2026-10-21",
+  "source": "Hex release API; lock archive SHA-256 compared with registry checksum",
+  "packages": [
+    {
+      "name": "nimble_options",
+      "version": "1.1.1",
+      "url": "https://hex.pm/api/packages/nimble_options/releases/1.1.1",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "jason",
+      "version": "1.4.5",
+      "url": "https://hex.pm/api/packages/jason/releases/1.4.5",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "multigraph",
+      "version": "0.16.1-mg.5",
+      "url": "https://hex.pm/api/packages/multigraph/releases/0.16.1-mg.5",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "hpax",
+      "version": "1.1.0",
+      "url": "https://hex.pm/api/packages/hpax/releases/1.1.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "nimble_pool",
+      "version": "1.1.0",
+      "url": "https://hex.pm/api/packages/nimble_pool/releases/1.1.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "req",
+      "version": "0.7.5",
+      "url": "https://hex.pm/api/packages/req/releases/0.7.5",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "mint",
+      "version": "1.11.0",
+      "url": "https://hex.pm/api/packages/mint/releases/1.11.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "finch",
+      "version": "0.24.0",
+      "url": "https://hex.pm/api/packages/finch/releases/0.24.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "telemetry",
+      "version": "1.4.2",
+      "url": "https://hex.pm/api/packages/telemetry/releases/1.4.2",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "decimal",
+      "version": "3.2.0",
+      "url": "https://hex.pm/api/packages/decimal/releases/3.2.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "db_connection",
+      "version": "2.10.2",
+      "url": "https://hex.pm/api/packages/db_connection/releases/2.10.2",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "ets",
+      "version": "0.9.0",
+      "url": "https://hex.pm/api/packages/ets/releases/0.9.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "plug",
+      "version": "1.20.3",
+      "url": "https://hex.pm/api/packages/plug/releases/1.20.3",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "reactor",
+      "version": "1.0.7",
+      "url": "https://hex.pm/api/packages/reactor/releases/1.0.7",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "yamerl",
+      "version": "0.10.0",
+      "url": "https://hex.pm/api/packages/yamerl/releases/0.10.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "picosat_elixir",
+      "version": "0.2.3",
+      "url": "https://hex.pm/api/packages/picosat_elixir/releases/0.2.3",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "yaml_elixir",
+      "version": "2.12.2",
+      "url": "https://hex.pm/api/packages/yaml_elixir/releases/2.12.2",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "crux",
+      "version": "0.1.4",
+      "url": "https://hex.pm/api/packages/crux/releases/0.1.4",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "ash_postgres",
+      "version": "2.15.1",
+      "url": "https://hex.pm/api/packages/ash_postgres/releases/2.15.1",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "iterex",
+      "version": "0.1.2",
+      "url": "https://hex.pm/api/packages/iterex/releases/0.1.2",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "ash_sql",
+      "version": "0.8.3",
+      "url": "https://hex.pm/api/packages/ash_sql/releases/0.8.3",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "ymlr",
+      "version": "5.1.6",
+      "url": "https://hex.pm/api/packages/ymlr/releases/5.1.6",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "spark",
+      "version": "2.7.8",
+      "url": "https://hex.pm/api/packages/spark/releases/2.7.8",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "mime",
+      "version": "2.0.7",
+      "url": "https://hex.pm/api/packages/mime/releases/2.0.7",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "ecto",
+      "version": "3.14.2",
+      "url": "https://hex.pm/api/packages/ecto/releases/3.14.2",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "stream_data",
+      "version": "1.4.0",
+      "url": "https://hex.pm/api/packages/stream_data/releases/1.4.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "ash",
+      "version": "3.36.1",
+      "url": "https://hex.pm/api/packages/ash/releases/3.36.1",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "ecto_sql",
+      "version": "3.14.0",
+      "url": "https://hex.pm/api/packages/ecto_sql/releases/3.14.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "websock",
+      "version": "0.5.3",
+      "url": "https://hex.pm/api/packages/websock/releases/0.5.3",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "thousand_island",
+      "version": "1.6.0",
+      "url": "https://hex.pm/api/packages/thousand_island/releases/1.6.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "plug_crypto",
+      "version": "2.2.0",
+      "url": "https://hex.pm/api/packages/plug_crypto/releases/2.2.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "elixir_make",
+      "version": "0.10.0",
+      "url": "https://hex.pm/api/packages/elixir_make/releases/0.10.0",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "splode",
+      "version": "0.3.2",
+      "url": "https://hex.pm/api/packages/splode/releases/0.3.2",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "bandit",
+      "version": "1.13.1",
+      "url": "https://hex.pm/api/packages/bandit/releases/1.13.1",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    },
+    {
+      "name": "postgrex",
+      "version": "0.22.4",
+      "url": "https://hex.pm/api/packages/postgrex/releases/0.22.4",
+      "checksum_matches": true,
+      "retirement": null,
+      "security_advisories": [],
+      "advisories_field_present": true
+    }
+  ]
+}
