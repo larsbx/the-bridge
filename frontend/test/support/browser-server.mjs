@@ -12,7 +12,7 @@ const close = async () => {
 };
 try {
   if (process.env.BRIDGE_BROWSER_BACKEND === 'ash') {
-    ash = spawn('mix', ['run', '--no-halt', 'test/support/browser_backend.exs'], {
+    ash = spawn('mix', ['run', '--no-halt', 'scripts/browser_backend.exs'], {
       cwd: fileURLToPath(new URL('../../..', import.meta.url)),
       env: { ...process.env, MIX_ENV: 'test', BRIDGE_BROWSER_TEST: '1' }, stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -32,4 +32,4 @@ try {
   }
   console.log('Browser test servers ready');
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { await close(); process.exit(0); });
-} catch (error) { await close(); throw error; }
+} catch (error) { await close(); throw new Error(error.message + (output ? '\nAsh fixture output:\n' + output : ''), { cause: error }); }

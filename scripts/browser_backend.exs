@@ -148,3 +148,7 @@ end
 Bridge.BrowserFixture.reset()
 {:ok, _} = Bandit.start_link(plug: Bridge.BrowserFixture, ip: {127, 0, 0, 1}, port: 4174)
 IO.puts("Synthetic Plaid + real Ash browser backend ready")
+
+# mix run --no-halt keeps the VM alive, but its evaluation process can finish.
+# Keep the fixture owner alive for linked Bandit/Agent processes and Req.Test ownership.
+Process.sleep(:infinity)
