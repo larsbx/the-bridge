@@ -21,7 +21,16 @@ The normal Playwright browser download failed in this runner. The local browser 
 
 The workflow retains the existing pinned formal job and PostgreSQL ExUnit/conformance gate, and adds the production-Node HTTP suite plus both browser suites. The additional full-stack browser suite starts **real SvelteKit + Bandit/Ash + PostgreSQL**, substituting only outbound Plaid HTTP and the SDK. Its guarded fixture uses a dedicated disposable `bridge_browser_test` database. It checks signed sessions, encrypted Item token use, Link/exchange/relink, committed SSE refresh, account-ID replacement without duplicate balances, historical labeling and logout with a stream open.
 
-Current-head CI results will be recorded after the run. A passing historical run from PR #1 is not evidence that this follow-up passed. Local PostgreSQL execution is unavailable; the real database/browser checks must pass in CI.
+[Run 39678607191](https://github.com/larsbx/the-bridge/actions/runs/39678607191) passed **both jobs** on application revision `7c7c7e3e231483a42e952c3408836334b7de3f65`:
+
+- **26 ExUnit tests, zero failures**, against PostgreSQL 16, including the unchanged reconciliation/model-conformance checks and the new large-cent wire regression.
+- **12 production-Node HTTP tests**, **4 Chromium contract tests**, and **2 real Ash/PostgreSQL browser tests** passed. CI used Playwright's own browser installation.
+- Svelte check, Node production build, browser budget, database creation/migrations, compilation, formatting, migration-drift checks and both dependency-audit paths passed.
+- The formal job completed exploration of **142,884 states**, and all six deliberately broken controls were required to produce their specified violations. The specification and its finite safety scope are unchanged.
+
+The initial run passed the database/contract suites but exposed a browser-fixture lifecycle bug: `mix run --no-halt` kept the VM alive after the evaluation process ended, taking its linked test listener down. Keeping the fixture owner alive corrected that startup failure; the passing rerun above includes the full-stack tests. The production Bandit server was already managed by the application supervisor.
+
+Local PostgreSQL execution remains unavailable; database execution and the real full-stack browser evidence above came from CI. This record updates evidence only; it does not change application behavior.
 
 ## Unexecuted acceptance
 

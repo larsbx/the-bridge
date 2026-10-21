@@ -80,7 +80,7 @@ MIX_ENV=test mix test
 MIX_ENV=test mix test --no-start test/unit
 ```
 
-The Ash suite uses PostgreSQL, not an in-memory substitute. The additional production-Node HTTP/browser contract tests use an explicit deterministic backend fixture and intercepted Plaid SDK; see the deployment guide for their boundaries. CI provides a separate PostgreSQL 16 service. See `docs/validation.md` for actual executed evidence and remaining gates. A successful source build alone does not establish production readiness.
+The Ash suite uses PostgreSQL, not an in-memory substitute. The additional production-Node HTTP/browser contract tests use an explicit deterministic backend fixture and intercepted Plaid SDK; see the deployment guide for their boundaries. CI provides a separate PostgreSQL 16 service. See `docs/sveltekit-validation.md` for actual executed evidence and remaining gates. A successful source build alone does not establish production readiness.
 
 ## Formal methods
 
