@@ -1,0 +1,14 @@
+{
+  "name": "the-bridge-finance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test",
+    "check": "node --check src/server.mjs && node --check src/db.mjs && node --check src/plaid.mjs && node --check src/security.mjs && node --check public/app.js"
+  }
+}
