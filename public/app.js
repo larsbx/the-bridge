@@ -1,6 +1,6 @@
 const $ = id => document.getElementById(id);
-const dollar = amount => amount === null || amount === undefined ? 'Unavailable' :
-  new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(amount / 100);
+const dollar = (amount, currency='USD') => amount === null || amount === undefined ? 'Unavailable' :
+  new Intl.NumberFormat('en-US',{style:'currency',currency:/^[A-Z]{3}$/.test(currency || '') ? currency : 'USD'}).format(amount / 100);
 const number = value => Math.max(0,Number(value) || 0);
 let csrf = null;
 let stream = null;
@@ -80,7 +80,7 @@ function render(data) {
   populateAccounts(data);
   const errors=data.items.filter(item=>item.status !== 'connected');
   if (errors.length) message(errors.length+' linked institution(s) need attention. Reconnect if prompted.');
-  else if (data.balancesIncomplete) message('One or more balances are unavailable. Balance totals are partial.');
+  else if (data.balancesIncomplete) message('Missing or non-USD balances are omitted from USD balance totals.');
   else message('Spending uses posted, categorized transactions; recognized transfers are excluded. Historical activity can arrive later.');
 }
 function populateAccounts(data) {
@@ -107,7 +107,7 @@ function renderAccounts(data) {
     const card=element('article','account-card');
     card.append(element('div','account-name',account.name+(account.mask ? ' ••'+account.mask : '')));
     card.append(element('div','account-kind',(account.type+' · '+(account.subtype || 'account')).replaceAll('_',' ')));
-    card.append(element('div','account-balance',dollar(account.current_cents)));
+    card.append(element('div','account-balance',dollar(account.current_cents,account.currency)));
     card.append(element('div','account-updated','Snapshot updated '+new Date(account.updated_at).toLocaleString()));
     const item=data.items.find(entry=>entry.item_id === account.item_id);
     if (item && item.status === 'needs_relink') {
@@ -137,7 +137,7 @@ function renderCategories(data) {
     meta.append(element('span','amount',dollar(row.amount_cents)));
     const track=element('div','progress');
     const fill=element('span');
-    fill.style.width=Math.round(100*row.amount_cents/max)+'%';
+    fill.style.width=Math.max(0,Math.round(100*row.amount_cents/max))+'%';
     track.append(fill);
     outer.append(meta,track);
     target.append(outer);
@@ -178,7 +178,7 @@ function renderRows(data) {
     row.append(element('td','',names[tx.account_id] || 'Linked account'));
     row.append(element('td','',tx.category.replaceAll('_',' ').toLowerCase()));
     row.append(element('td','right '+(tx.amount_cents > 0 ? 'expense':'income'),
-      tx.amount_cents > 0 ? '−'+dollar(tx.amount_cents) : '+'+dollar(Math.abs(tx.amount_cents))));
+      tx.amount_cents > 0 ? '−'+dollar(tx.amount_cents,tx.currency) : '+'+dollar(Math.abs(tx.amount_cents),tx.currency)));
     target.append(row);
   }
 }
