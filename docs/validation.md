@@ -19,9 +19,21 @@ This change updates PR #1 from inspected head `4b681cdb3ada8e9370dcd4d47046de94f
 
 The 12 executed tests cover AES-GCM tamper detection, session signatures/expiry/CSRF, password comparison, HTML escaping, pagination-mutation restart, malformed/nonadvancing pagination, complete-snapshot validation, signed webhook body/signature/key/time checks, unauthenticated private-route/SSE access, forged cookies, rejected origins, unsigned webhooks and the non-hydrated login shell.
 
+## Executed in GitHub Actions
+
+[Run 39656851082](https://github.com/larsbx/the-bridge/actions/runs/39656851082) passed on application commit `8cad54d548fb0eae846cd41dd8892fc6a8750b47`:
+
+- PostgreSQL 16 database creation and all migrations succeeded.
+- Full ExUnit suite: **24 tests, 0 failures**, including all reconciliation and HTTP integration regressions below.
+- Compilation with warnings as errors, formatting and Ash migration drift checks passed.
+- Both Hex audit checks passed; all 35 locked package checksums and retirement/advisory metadata were verified.
+- Frontend type checks, static build, npm audit (0 vulnerabilities), and the browser budget passed: **1,349 bytes gzip**, no Svelte hydration.
+
+The first database run exposed Ash's default missing-record exception behavior. Lookups that intentionally allow absence now explicitly use `not_found_error?: false` for first-time Item linking, revoked sessions and repeated transaction removals. The passing rerun includes repeated removal coverage. This correction does not suppress authorization or other database errors.
+
 ## Not yet executed
 
-- **PostgreSQL integration:** the runner has PostgreSQL binaries but cannot switch to an unprivileged OS user. Starting a dedicated instance failed, and its escalation policy rejected the requested unprivileged launch. No PostgreSQL service or credentials were supplied. The committed tests require PostgreSQL and are not silently skipped or replaced by an in-memory data layer.
+- **Local PostgreSQL execution:** the local runner could not switch to an unprivileged OS user, and its escalation policy rejected the requested launch. The full database suite instead executed successfully in GitHub Actions; it was not skipped or replaced by an in-memory data layer.
 - **Live Plaid Sandbox:** no Plaid credentials were present. Browser Link, token exchange, Item relinking, provider-delivered signed webhooks and actual Sandbox transaction flows remain unexecuted.
 - **Browser end-to-end:** the static build and security checks are not a substitute for a full browser walkthrough against the running backend.
 - **Legacy SQLite import:** not implemented or executed. Existing files are preserved on disk; no claim is made that their records have moved into PostgreSQL.
@@ -34,4 +46,4 @@ The HTTP integration suite exercises valid session reads, CSRF and fixed-Origin 
 
 ## Acceptance
 
-Keep this PR as a draft until the PostgreSQL/HTTP integration suite and review pass. Do not treat compilation, the unit suite, or static assets as production acceptance. Before production, also require the Sandbox evidence, OAuth redirect/resume, durable sync work, token revocation/removal, key/session lifecycle controls, recovery/load testing and any needed legacy-data import described in the README.
+The PostgreSQL/HTTP integration gate is now green. Keep this PR as a draft pending review and the remaining acceptance gates. Do not treat passing deterministic tests as production acceptance. Before production, also require the Sandbox evidence, OAuth redirect/resume, durable sync work, token revocation/removal, key/session lifecycle controls, recovery/load testing and any needed legacy-data import described in the README.
