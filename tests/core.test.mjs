@@ -27,7 +27,7 @@ test('session integrity, expiry, CSRF and encrypted tokens',()=>{
   const issued=Date.now();
   const session=createSession(key,issued);
   assert.equal(readSession(key,session,issued),true);
-  assert.equal(readSession(key,session.replace(/.$/,'x'),issued),false);
+  assert.equal(readSession(key,session.slice(0,-1)+(session.endsWith('x')?'y':'x'),issued),false);
   assert.equal(readSession(key,session,issued+13*60*60*1000),false);
   assert.equal(validateCsrf(key,session,csrfToken(key,session)),true);
   assert.equal(validateCsrf(otherKey,session,csrfToken(key,session)),false);
