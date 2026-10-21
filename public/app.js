@@ -1,6 +1,10 @@
 const $ = id => document.getElementById(id);
-const dollar = (amount, currency='USD') => amount === null || amount === undefined ? 'Unavailable' :
-  new Intl.NumberFormat('en-US',{style:'currency',currency:/^[A-Z]{3}$/.test(currency || '') ? currency : 'USD'}).format(amount / 100);
+const dollar = (amount, currency='USD') => {
+  if (amount === null || amount === undefined) return 'Unavailable';
+  if (!currency || !/^[A-Z]{3}$/.test(currency))
+    return new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(amount/100)+' (currency unknown)';
+  return new Intl.NumberFormat('en-US',{style:'currency',currency}).format(amount/100);
+};
 const number = value => Math.max(0,Number(value) || 0);
 let csrf = null;
 let stream = null;
