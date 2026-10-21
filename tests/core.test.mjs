@@ -74,7 +74,7 @@ test('failed update does not advance cursor or partially commit pages',()=>{
     store.saveItem('item-2','secret','Demo');
     assert.throws(()=>store.commitSync('item-2',[
       {added:[mockTransaction('success',6)]},
-      {added:[{...mockTransaction('failure',7),transaction_id:null}]}
+      {added:[{...mockTransaction('failure',7),account_id:null}]}
     ],'should-not-commit'));
     assert.equal(store.item('item-2').cursor,null);
     assert.equal(store.snapshot('2026-10').transactions.length,0);
