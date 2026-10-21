@@ -1,0 +1,57 @@
+name: finance-dashboard
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  formal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: python3 scripts/check_formal.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reconciliation-model-evidence
+          path: |
+            _build/formal/*.log
+            _build/formal/report.json
+          if-no-files-found: error
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    env:
+      MIX_ENV: test
+      DATABASE_URL: ecto://postgres:postgres@localhost/bridge_test
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124
+        with:
+          otp-version: '27.3.4'
+          elixir-version: '1.19.0'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.19.0'
+      - run: mix deps.get --check-locked
+      - run: mix compile --warnings-as-errors
+      - run: mix format --check-formatted
+      - run: mix ash_postgres.generate_migrations --check
+      - run: mix hex.audit
+      - run: mix run --no-start scripts/audit_hex.exs
+      - run: npm ci --prefix frontend --ignore-scripts
+      - run: npm audit --prefix frontend --audit-level=moderate
+      - run: npm run check --prefix frontend
+      - run: npm run build --prefix frontend
+      - run: mix ecto.create && mix ecto.migrate
+      - run: mix test --no-compile

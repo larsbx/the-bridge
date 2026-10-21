@@ -1,0 +1,64 @@
+{
+  "tool": {
+    "version": "1.7.4",
+    "url": "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar",
+    "sha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
+  },
+  "inputs": {
+    "formal/Reconciliation.tla": "a4d191cc0fd08a52204050eb82ef031826efc0547705128eb86178a6ed441631",
+    "formal/Reconciliation.cfg": "b33a7eaab7bda6d0ada640c51c0f61f53638581da3d8ec4b0578cc9cce918973",
+    "scripts/check_formal.py": "57cdc3c1c0854fb805d11f8144befe2fffc6c301e269472f3eddaa0210284f3a"
+  },
+  "scope": "2 Items, 2 workers, 2 account/transaction identities, 6 request shapes, cursor parity",
+  "checks": [
+    {
+      "mutation": "None",
+      "expected_violation": null,
+      "exit_code": 0,
+      "generated": 618193,
+      "distinct": 142884
+    },
+    {
+      "mutation": "StaleAccounts",
+      "expected_violation": "ActiveMatchesSnapshot",
+      "exit_code": 12,
+      "generated": 4097,
+      "distinct": 1705
+    },
+    {
+      "mutation": "DeleteHistory",
+      "expected_violation": "HistoryMatchesSync",
+      "exit_code": 12,
+      "generated": 346,
+      "distinct": 172
+    },
+    {
+      "mutation": "CrossItem",
+      "expected_violation": "ItemIsolation",
+      "exit_code": 12,
+      "generated": 218,
+      "distinct": 122
+    },
+    {
+      "mutation": "EarlyCursor",
+      "expected_violation": "CursorAtomic",
+      "exit_code": 12,
+      "generated": 26,
+      "distinct": 26
+    },
+    {
+      "mutation": "NoLock",
+      "expected_violation": "PerItemMutex",
+      "exit_code": 12,
+      "generated": 52,
+      "distinct": 27
+    },
+    {
+      "mutation": "EarlyNotification",
+      "expected_violation": "NoEarlyNotification",
+      "exit_code": 12,
+      "generated": 26,
+      "distinct": 26
+    }
+  ]
+}

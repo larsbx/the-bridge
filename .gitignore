@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+data/
+*.sqlite*
+_build/
+deps/
+.elixir_ls/
+frontend/node_modules/
+frontend/.svelte-kit/
+priv/static/
+*.beam
+__pycache__/
