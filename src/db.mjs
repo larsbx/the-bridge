@@ -108,7 +108,7 @@ export class Store {
     const trend = this.db.prepare('SELECT substr(date,1,7) AS month, SUM(amount_cents) AS spent FROM transactions ' +
       'WHERE date >= ? AND date < ? AND pending=0 AND category NOT IN ' + excluded +
       trendWhere + ' GROUP BY substr(date,1,7)').all(...trendArgs);
-    const byMonth = Object.fromEntries(trend.map(r => [r.month, Math.max(0, r.spent)]));
+    const byMonth = Object.fromEntries(trend.map(r => [r.month, r.spent]));
     const months = previousMonths(month, 6).map(m => ({month: m, amount_cents: byMonth[m] || 0}));
     const cash = accounts.filter(a => a.type === 'depository' && (!a.currency || a.currency === 'USD'));
     const debt = accounts.filter(a => a.type === 'credit' && (!a.currency || a.currency === 'USD'));
