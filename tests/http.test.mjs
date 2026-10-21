@@ -5,6 +5,7 @@ import { createServer } from 'node:net';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { once } from 'node:events';
 
 async function availablePort() {
@@ -30,7 +31,7 @@ async function untilHealthy(origin, child) {
 }
 test('private dashboard HTTP authorization, CSRF, SSE and logout revocation', {timeout:20000}, async() => {
   const port=await availablePort();
-  const root=resolve(import.meta.dirname || new URL('..', import.meta.url).pathname,'..');
+  const root=resolve(fileURLToPath(new URL('..', import.meta.url)));
   const directory=mkdtempSync(join(tmpdir(),'bridge-http-'));
   const origin='http://127.0.0.1:'+port;
   const password='a sufficiently long passphrase for tests';
