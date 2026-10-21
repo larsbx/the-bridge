@@ -61,7 +61,7 @@ function cookieFor(token) {
 }
 function session(req) {
   const token = parseCookies(req.headers.cookie).bridge_session;
-  return readSession(sessionKey, token) ? token : null;
+  return readSession(sessionKey, token) && store.isSessionActive(token) ? token : null;
 }
 function originAllowed(req) {
   const origin = req.headers.origin;
@@ -80,6 +80,11 @@ function publish() {
   version++;
   const packet = 'id: ' + version + '\nevent: refresh\ndata: ' + JSON.stringify({version}) + '\n\n';
   for (const client of clients) {
+    if (!store.isSessionActive(client.bridgeToken)) {
+      clients.delete(client);
+      client.end();
+      continue;
+    }
     if (!client.write(packet)) {
       // Clients also receive a heartbeat; slow connections are closed defensively.
       if (client.writableLength > 1024 * 1024) client.end();
@@ -159,6 +164,7 @@ const server = createServer(async (req, res) => {
       }
       record.count = 0;
       const token = createSession(sessionKey);
+      store.issueSession(token);
       return send(res,200,{authenticated:true,csrf:csrfToken(sessionKey,token)},
         {'Set-Cookie':cookieFor(token)});
     }
@@ -167,8 +173,13 @@ const server = createServer(async (req, res) => {
       return send(res,200,token ? {authenticated:true,csrf:csrfToken(sessionKey,token)} : {authenticated:false});
     if (!token) return send(res,401,{error:'authentication_required'});
     if (req.method === 'POST' && !csrfAllowed(req, token)) return send(res,403,{error:'csrf_rejected'});
-    if (req.method === 'POST' && pathname === '/api/logout')
+    if (req.method === 'POST' && pathname === '/api/logout') {
+      store.revokeSession(token);
+      for (const client of clients) {
+        if (client.bridgeToken === token) { clients.delete(client); client.end(); }
+      }
       return send(res,200,{logged_out:true},{'Set-Cookie':'bridge_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0' + (secureCookie ? '; Secure':'')});
+    }
     if (req.method === 'GET' && pathname === '/api/snapshot') {
       const url = new URL(req.url,'http://localhost');
       const month = url.searchParams.get('month') ||
@@ -207,6 +218,7 @@ const server = createServer(async (req, res) => {
       res.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8',
         'Cache-Control':'no-cache, no-transform','Connection':'keep-alive',
         'X-Accel-Buffering':'no','X-Content-Type-Options':'nosniff'});
+      res.bridgeToken = token;
       clients.add(res);
       res.write('retry: 5000\nevent: refresh\ndata: ' + JSON.stringify({version}) + '\n\n');
       const heartbeat = setInterval(() => {
