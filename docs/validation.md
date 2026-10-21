@@ -44,6 +44,14 @@ The reconciliation suite exercises account removal; account-ID replacement witho
 
 The HTTP integration suite exercises valid session reads, CSRF and fixed-Origin checks, logout revocation including SSE access, escaping of stored financial strings, no-store responses, native HTML form login/logout and rejection of unsigned webhooks. CI supplies PostgreSQL 16 and builds the actual SvelteKit shell before running these tests.
 
+## Formal reconciliation checks
+
+The [formal specification and correspondence map](../formal/README.md) now define the reconciliation safety contract. The pinned TLC 1.7.4 run completed locally with **142,884 distinct reachable states** and no invariant violations. All six deliberately broken variants produced the required named invariant violation and a counterexample; parser errors and timeouts are rejected. Tool/input hashes and exact counts are recorded in `formal/evidence.json`.
+
+The application unit/security suite still passes (12 tests). The new PostgreSQL tests enumerate 216 length-three request sequences (648 refreshes) and exercise separate-connection lock waiting/private-write visibility. They are compiled locally; their database execution is delegated to the PostgreSQL CI service because of the local runner restriction described above. The dedicated `formal` CI job independently reruns the model and negative controls and retains logs as an artifact.
+
+This is a finite safety model check and concrete implementation correspondence testing, not a verified compiler, an unbounded proof of the Elixir implementation, a liveness theorem, or live Plaid acceptance.
+
 ## Acceptance
 
 The PostgreSQL/HTTP integration gate is now green. Keep this PR as a draft pending review and the remaining acceptance gates. Do not treat passing deterministic tests as production acceptance. Before production, also require the Sandbox evidence, OAuth redirect/resume, durable sync work, token revocation/removal, key/session lifecycle controls, recovery/load testing and any needed legacy-data import described in the README.

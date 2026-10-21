@@ -6,6 +6,20 @@ on:
 permissions:
   contents: read
 jobs:
+  formal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: python3 scripts/check_formal.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reconciliation-model-evidence
+          path: |
+            _build/formal/*.log
+            _build/formal/report.json
+          if-no-files-found: error
   test:
     runs-on: ubuntu-latest
     services:

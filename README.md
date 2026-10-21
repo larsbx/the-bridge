@@ -72,6 +72,14 @@ MIX_ENV=test mix test --no-start test/unit
 
 The full suite uses PostgreSQL, not an in-memory substitute. CI provides a separate PostgreSQL 16 service. See `docs/validation.md` for actual executed evidence and remaining gates. A successful source build alone does not establish production readiness.
 
+## Formal methods
+
+The [TLA+ reconciliation specification](formal/README.md) checks concurrent refresh safety with a pinned TLC toolchain, six counterexample controls and a dedicated CI gate. PostgreSQL model-conformance tests connect the abstract contract to real resource writes and advisory locks. The scope and assumptions are explicit: finite model checking is not a proof of the deployed application.
+
+```sh
+python3 scripts/check_formal.py
+```
+
 ## Existing SQLite data
 
 This PR changes the persistence engine. **No automatic SQLite-to-PostgreSQL import is implemented.** Existing SQLite files are neither opened nor deleted by the Elixir application. Back up the file and its `DATA_KEY`; do not relink and discard the old ledger as a substitute for migration. If a prior prototype has real or valuable data, an explicitly validated import of Items, accounts, transactions and cursors is an acceptance gate before cutover. Sessions should be reissued. Test historical preservation here concerns records in the new PostgreSQL ledger, not an unexecuted legacy import.
