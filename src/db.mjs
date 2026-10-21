@@ -15,7 +15,7 @@ export function previousMonths(month, count = 6) {
   monthBounds(month);
   const [year, mon] = month.split('-').map(Number);
   return Array.from({length: count}, (_, i) =>
-    new Date(Date.UTC(year, mon - count + i + 1, 1)).toISOString().slice(0, 7));
+    new Date(Date.UTC(year, mon - count + i, 1)).toISOString().slice(0, 7));
 }
 export class Store {
   constructor(path, key) {
@@ -42,7 +42,7 @@ export class Store {
   }
   saveItem(itemId, accessToken, institution) {
     this.db.prepare('INSERT INTO items(item_id, encrypted_token, institution, updated_at) VALUES (?, ?, ?, ?) ' +
-      'ON CONFLICT(item_id) DO UPDATE SET encrypted_token=excluded.encrypted_token, institution=excluded.institution, status="connected", updated_at=excluded.updated_at')
+      'ON CONFLICT(item_id) DO UPDATE SET encrypted_token=excluded.encrypted_token, institution=excluded.institution, status=excluded.status, updated_at=excluded.updated_at')
       .run(itemId, seal(this.key, accessToken), institution || 'Linked institution', isoNow());
   }
   markStatus(itemId, status) {
@@ -101,10 +101,13 @@ export class Store {
     const transactions = this.db.prepare('SELECT transaction_id,account_id,date,name,merchant,amount_cents,pending,category,detail,currency FROM transactions' +
       clause + ' ORDER BY date DESC,transaction_id DESC LIMIT 75').all(...values);
     const firstTrend = previousMonths(month, 6)[0] + '-01';
+    const trendWhere = (account ? ' AND account_id=?' : '') +
+      (search ? ' AND (name LIKE ? OR merchant LIKE ?)' : '');
+    const trendArgs = [firstTrend, end, ...(account ? [account] : []),
+      ...(search ? ['%' + search + '%', '%' + search + '%'] : [])];
     const trend = this.db.prepare('SELECT substr(date,1,7) AS month, SUM(amount_cents) AS spent FROM transactions ' +
       'WHERE date >= ? AND date < ? AND pending=0 AND category NOT IN ' + excluded +
-      (account ? ' AND account_id=?' : '') + ' GROUP BY substr(date,1,7)')
-      .all(...[firstTrend, end, ...(account ? [account] : [])]);
+      trendWhere + ' GROUP BY substr(date,1,7)').all(...trendArgs);
     const byMonth = Object.fromEntries(trend.map(r => [r.month, Math.max(0, r.spent)]));
     const months = previousMonths(month, 6).map(m => ({month: m, amount_cents: byMonth[m] || 0}));
     const cash = accounts.filter(a => a.type === 'depository');
