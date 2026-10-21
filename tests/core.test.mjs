@@ -12,7 +12,7 @@ const key = keyFromHex('ab'.repeat(32),'test key');
 const otherKey = keyFromHex('cd'.repeat(32),'test key');
 const mockTransaction = (id, amount, category='FOOD_AND_DRINK') => ({
   transaction_id:id,account_id:'account-1',date:'2026-10-20',name:'Coffee',
-  amount,pending:false,personal_finance_category:{primary:category,detailed:'COFFEE'}
+  amount,pending:false,iso_currency_code:'USD',personal_finance_category:{primary:category,detailed:'COFFEE'}
 });
 const testAccount = (id,type,current) => ({
   account_id:id,name:type+' account',mask:'1234',type,subtype:type==='credit'?'credit card':'checking',
