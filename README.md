@@ -15,7 +15,7 @@ The Bridge does **not** reuse the Plaid connection established inside ChatGPT Fi
 - Single-owner password sign-in, HMAC-signed HTTP-only sessions, CSRF protection, strict same-site cookies, basic login throttling and a restrictive Content Security Policy.
 - Tests cover encryption, authentication primitives, transaction idempotency, database rollback, pagination-mutation recovery and signed webhooks.
 
-**Scope limits:** This is an initial audited-code candidate, not an approved production deployment. Spending excludes Plaid transactions categorized as income, recognized transfers and loan payments, and excludes pending transactions. Net spending includes refunds. The balance card shows checking/savings snapshots less reported credit-card balances; it is **not** net worth, live available cash, or affordability advice. The snapshot can be incomplete when the bank or Plaid has not returned a balance. No exchange-rate conversion is provided. Prior to production use, restrict the connected accounts to USD or implement currency partitioning.
+**Scope limits:** This is an initial audited-code candidate, not an approved production deployment. Spending excludes Plaid transactions categorized as income, recognized transfers and loan payments, and excludes pending transactions. Net spending includes refunds. The balance card shows checking/savings snapshots less reported credit-card balances; it is **not** net worth, live available cash, or affordability advice. The snapshot can be incomplete when the bank or Plaid has not returned a balance. USD totals include only records explicitly denominated in USD; balances and transactions with unknown or other currencies are not silently treated as USD. No exchange-rate conversion is provided; add currency partitioning before supporting international accounts.
 
 ## Local quickstart (Sandbox)
 
@@ -56,6 +56,7 @@ npm test
 | SESSION_KEY / DATA_KEY | Distinct 32-byte cryptographic keys encoded in hex |
 | DB_PATH | SQLite database path (default ./data/bridge.sqlite, ignored by Git) |
 | PORT | Listening TCP port (default 3000) |
+| HOST | Listening address (default 127.0.0.1; set 0.0.0.0 only behind a trusted HTTPS reverse proxy) |
 | PUBLIC_URL | Public HTTPS origin, required in production; used for Plaid webhooks and origin checks |
 | PLAID_REDIRECT_URI | Optional registered redirect URL for future OAuth flow support |
 
