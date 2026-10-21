@@ -230,7 +230,7 @@ const server = createServer(async (req, res) => {
 });
 server.requestTimeout = 30000;
 server.headersTimeout = 15000;
-server.listen(port,'0.0.0.0',() => {
+server.listen(port,env.HOST || '127.0.0.1',() => {
   console.log('The Bridge listening on port '+port+' ('+(env.PLAID_ENV||'sandbox')+')');
   syncAll(); // Cursor sync on restart catches missed webhooks.
 });
