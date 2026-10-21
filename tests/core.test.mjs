@@ -45,6 +45,11 @@ test('month boundaries and chart chronology cross year boundary',()=>{
 });
 test('atomic Plaid updates, removals, pending reconciliation and idempotency',()=>{
   withStore(store=>{
+    const session = createSession(key);
+    store.issueSession(session);
+    assert.equal(store.isSessionActive(session),true);
+    store.revokeSession(session);
+    assert.equal(store.isSessionActive(session),false);
     store.saveItem('item-1','access-token','Demo Bank');
     store.saveAccounts('item-1',[testAccount('account-1','depository',1000),testAccount('account-2','credit',250)]);
     const pending={...mockTransaction('pending',5),pending:true};
