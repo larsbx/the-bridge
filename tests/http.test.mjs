@@ -78,9 +78,9 @@ test('private dashboard HTTP authorization, CSRF, SSE and logout revocation', {t
     try {
       res=await fetch(origin+'/api/events',{headers:{Cookie:cookie},signal:controller.signal});
       assert.equal(res.status,200);
-      assert.match(res.headers.get('content-type'),'text/event-stream');
+      assert.match(res.headers.get('content-type'),/text\/event-stream/);
       const chunk=await res.body.getReader().read();
-      assert.match(new TextDecoder().decode(chunk.value),'event: refresh');
+      assert.match(new TextDecoder().decode(chunk.value),/event: refresh/);
     } finally {controller.abort();}
     res=await fetch(origin+'/api/logout',{method:'POST',headers:{
       Origin:origin,Cookie:cookie,'X-CSRF-Token':csrf,'Content-Type':'application/json'
