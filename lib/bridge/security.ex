@@ -74,11 +74,12 @@ defmodule Bridge.Security do
   def valid_signature?(_), do: false
 
   def active?(token) do
-    valid_signature?(token) and not is_nil(Ash.get!(Session, hash(token), actor: @auth))
+    valid_signature?(token) and
+      not is_nil(Ash.get!(Session, hash(token), actor: @auth, not_found_error?: false))
   end
 
   def revoke(token) do
-    if record = Ash.get!(Session, hash(token), actor: @auth),
+    if record = Ash.get!(Session, hash(token), actor: @auth, not_found_error?: false),
       do: Ash.destroy!(record, actor: @auth)
 
     Bridge.Events.publish(:session_changed)

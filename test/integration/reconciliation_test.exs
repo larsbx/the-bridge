@@ -109,6 +109,7 @@ defmodule Bridge.ReconciliationTest do
     refresh("i1", [], page([posted]))
     assert [%{transaction_id: "posted"}] = Store.rows(Transaction, "i1")
     refresh("i1", [], Map.put(page(), "removed", [%{"transaction_id" => "posted"}]))
+    refresh("i1", [], Map.put(page(), "removed", [%{"transaction_id" => "posted"}]))
     assert Store.rows(Transaction, "i1") == []
   end
 

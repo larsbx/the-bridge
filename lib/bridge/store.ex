@@ -14,7 +14,7 @@ defmodule Bridge.Store do
     do: record |> Ash.Changeset.for_update(:change, attrs) |> Ash.update!(actor: @sync)
 
   def items(actor), do: Ash.read!(Item, actor: actor)
-  def item(id), do: Ash.get!(Item, id, actor: @sync)
+  def item(id), do: Ash.get!(Item, id, actor: @sync, not_found_error?: false)
 
   def save_item(id, token, institution) do
     # Re-linking must never reset a committed transaction cursor.
@@ -112,7 +112,12 @@ defmodule Bridge.Store do
   end
 
   defp drop_transaction(item_id, tx_id, pending_only \\ false) do
-    record = Ash.get!(Transaction, %{item_id: item_id, transaction_id: id!(tx_id)}, actor: @sync)
+    record =
+      Ash.get!(Transaction, %{item_id: item_id, transaction_id: id!(tx_id)},
+        actor: @sync,
+        not_found_error?: false
+      )
+
     if record && (not pending_only or record.pending), do: Ash.destroy!(record, actor: @sync)
   end
 
