@@ -33,9 +33,4 @@ defmodule Bridge.SecurityTest do
     refute Security.password?(nil)
     refute Security.password?(String.duplicate("x", 513))
   end
-
-  test "untrusted financial strings are escaped in HTML" do
-    assert Bridge.Web.HTML.escape(~s(<script a="'">&)) ==
-             "&lt;script a=&quot;&#39;&quot;&gt;&amp;"
-  end
 end

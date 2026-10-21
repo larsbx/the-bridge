@@ -11,3 +11,6 @@ frontend/.svelte-kit/
 priv/static/
 *.beam
 __pycache__/
+frontend/build/
+frontend/test-results/
+frontend/playwright-report/

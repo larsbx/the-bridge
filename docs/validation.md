@@ -1,4 +1,6 @@
-# Validation record — 2026-10-21
+# Historical Ash/reconciliation validation — 2026-10-21
+
+The current request-time Node-adapter implementation and its evidence are recorded in [SvelteKit validation](sveltekit-validation.md). The static-build results below describe merged PR #1 and are retained as historical baseline evidence.
 
 This change updates PR #1 from inspected head `4b681cdb3ada8e9370dcd4d47046de94f7f34e31`. It replaces the Node/SQLite implementation with Elixir/Ash/PostgreSQL and a SvelteKit-built, non-hydrated page shell.
 
