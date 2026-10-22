@@ -1,4 +1,3 @@
-/* Progressive enhancement only. Financial calculations and rendering stay in Elixir. */
 (() => {
   const csrf = document.querySelector('meta[name="bridge-csrf"]')?.content;
   if (!csrf) return;
