@@ -29,7 +29,6 @@ defmodule Bridge.HTTPTest do
 
   test "finance and SSE require an active session; mutations require CSRF and fixed origin" do
     assert call(:get, "/api/snapshot").status == 401
-    assert call(:get, "/fragment").status == 401
     assert call(:get, "/api/events").status == 401
     token = Security.create_session()
     assert call(:post, "/api/sync", %{}, token).status == 403
@@ -44,19 +43,19 @@ defmodule Bridge.HTTPTest do
     assert call(:get, "/api/events", nil, token).status == 401
   end
 
-  test "HTML renders without hydration; financial content is escaped and not cacheable" do
+  test "public projection exposes financial strings without secrets and is not cacheable" do
     Store.save_item("i", "secret", "<img src=x onerror=alert(1)>")
     token = Security.create_session()
-    response = call(:get, "/", nil, token)
+    response = call(:get, "/api/snapshot", nil, token)
     assert response.status == 200
-    assert response.resp_body =~ "&lt;img"
-    refute response.resp_body =~ "<img src=x"
+
+    assert Jason.decode!(response.resp_body)["items"] |> hd() |> Map.fetch!("institution") ==
+             "<img src=x onerror=alert(1)>"
+
     refute response.resp_body =~ "secret"
     assert get_resp_header(response, "cache-control") == ["no-store"]
-    refute response.resp_body =~ "import("
-    assert response.resp_body =~ ~s(method="get")
-    assert response.resp_body =~ ~s(method="post")
-    assert call(:get, "/fragment", nil, token).resp_body =~ ~s(id="finance")
+    refute response.resp_body =~ "encrypted_token"
+    refute response.resp_body =~ "cursor"
   end
 
   test "native form login and logout work without browser JavaScript" do
@@ -81,6 +80,26 @@ defmodule Bridge.HTTPTest do
 
     assert c.status == 303
     refute Security.active?(cookie.value)
+  end
+
+  test "public cent strings preserve integers beyond JavaScript's safe-number range" do
+    Store.save_item("large", "secret", "One")
+
+    Store.put(Bridge.Finance.Account, %{
+      item_id: "large",
+      account_id: "large-balance",
+      name: "Exact cents",
+      type: "depository",
+      currency: "USD",
+      current_cents: 9_007_199_254_740_993,
+      active: true,
+      updated_at: Store.now()
+    })
+
+    token = Security.create_session()
+    data = call(:get, "/api/snapshot", nil, token).resp_body |> Jason.decode!()
+    assert data["totals"]["cash_cents"] == "9007199254740993"
+    assert hd(data["accounts"])["current_cents"] == "9007199254740993"
   end
 
   test "unsigned webhook rejected without scheduling" do

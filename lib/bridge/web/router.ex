@@ -1,9 +1,7 @@
 defmodule Bridge.Web.Router do
   use Plug.Router
   alias Bridge.{Security, Store, Snapshot, Plaid, Sync}
-  alias Bridge.Web.HTML
   plug(:headers)
-  plug(Plug.Static, at: "/", from: {:bridge, "static"}, only: ~w(_app bridge.js style.css))
   plug(:match)
   plug(:dispatch)
 
@@ -26,7 +24,6 @@ defmodule Bridge.Web.Router do
     do:
       conn |> put_resp_content_type("application/json") |> send_resp(status, Jason.encode!(data))
 
-  defp html(conn, data), do: conn |> put_resp_content_type("text/html") |> send_resp(200, data)
   defp redirect(conn, path), do: conn |> put_resp_header("location", path) |> send_resp(303, "")
 
   defp cookie(conn, token, age),
@@ -112,33 +109,23 @@ defmodule Bridge.Web.Router do
 
   get("/healthz", do: json(conn, 200, %{status: "ok"}))
 
-  get "/" do
-    if actor = owner(conn) do
-      guarded(conn, fn conn, _ ->
-        html(
-          conn,
-          HTML.page(
-            HTML.dashboard(
-              snapshot(conn, actor),
-              Security.csrf(token(conn)),
-              fetch_query_params(conn).query_params
-            ),
-            Security.csrf(token(conn))
-          )
-        )
-      end)
-    else
-      html(conn, HTML.page(HTML.login()))
-    end
+  get("/api/snapshot",
+    do:
+      guarded(conn, fn conn, actor -> json(conn, 200, cents_as_strings(snapshot(conn, actor))) end)
+  )
+
+  # JSON numbers cannot preserve the ledger's full signed-64-bit cent range in JS.
+  # This is a wire/display conversion only; accounting stays in Snapshot/Store.
+  defp cents_as_strings(data) when is_map(data) and not is_struct(data) do
+    Map.new(data, fn {key, value} ->
+      if String.ends_with?(to_string(key), "_cents") and is_integer(value),
+        do: {key, Integer.to_string(value)},
+        else: {key, cents_as_strings(value)}
+    end)
   end
 
-  get("/fragment",
-    do: guarded(conn, fn conn, actor -> html(conn, HTML.finance(snapshot(conn, actor))) end)
-  )
-
-  get("/api/snapshot",
-    do: guarded(conn, fn conn, actor -> json(conn, 200, snapshot(conn, actor)) end)
-  )
+  defp cents_as_strings(data) when is_list(data), do: Enum.map(data, &cents_as_strings/1)
+  defp cents_as_strings(data), do: data
 
   get "/api/session" do
     json(

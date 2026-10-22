@@ -1,10 +1,10 @@
 # The Bridge
 
-Private, single-owner, read-only Plaid dashboard built with **Elixir, Ash 3, AshPostgres and SvelteKit**. PostgreSQL stores the ledger; Bandit/Plug serves the application. No Node server, Clojure or Datastar runtime is used.
+Private, single-owner, read-only Plaid dashboard built with **Elixir, Ash 3, AshPostgres and SvelteKit**. PostgreSQL stores the ledger. The compiled SvelteKit Node adapter serves the public application; Bandit/Plug serves the private Ash API. [Quick start and deployment](docs/deployment.md).
 
 ## Browser budget
 
-SvelteKit builds the page shell with `prerender = true` and **`csr = false`**. Elixir renders authenticated financial HTML into that shell and serves refresh fragments. This is intentionally not a hydrated Svelte SPA or a SvelteKit Node backend. Forms, filters and existing financial views work without JavaScript. All accounting, authorization and financial rendering remain server-side.
+SvelteKit renders authenticated pages and refresh fragments at request time with `prerender = false` and **`csr = false`**. Shared Svelte components render the dashboard from the authenticated Ash snapshot API. Forms, filters and existing financial views work without JavaScript. Accounting and authorization stay in Ash; financial HTML stays on the server.
 
 The only first-party browser script progressively adds SSE invalidation/refetch and Plaid Link. The build enforces a **2 KiB gzip budget** and rejects accidental Svelte hydration. There is no chart library, client store, browser financial cache, service worker or client-side accounting. Charts use native HTML progress elements with explicit numeric values. Plaid's third-party SDK is fetched only after Connect/Reconnect is clicked; its size is outside our budget.
 
@@ -29,7 +29,7 @@ Account churn alone cannot prove duplicate transaction identity. Cross-ID/cross-
 
 Ash resources require authorization by default. Only the server's sync principal can mutate financial resources; the authenticated owner can read. HTTP bodies cannot supply actor roles. Responses project explicit public fields, never token ciphertext or plaintext. AES-256-GCM access tokens stay server-side. The versioned ciphertext format remains compatible with the old token encoding, but this does not constitute a database migration.
 
-Sessions are HMAC-signed, 12-hour, HttpOnly, SameSite=Strict cookies with server-side hashed session records and revocation. HTTPS enables Secure cookies. Mutations require an exact configured Origin plus session-bound CSRF protection. Login attempts are serialized and rate-limited by the actual peer address; forwarded headers are not trusted. Password comparisons use PBKDF2-HMAC-SHA256 and constant-time comparison. The single-owner password is an environment secret, not a multi-user identity system.
+Sessions are HMAC-signed, 12-hour, HttpOnly, SameSite=Strict cookies with server-side hashed session records and revocation. HTTPS enables Secure cookies. Mutations require an exact configured Origin plus session-bound CSRF protection. Login attempts are serialized and rate-limited by the actual API peer address (the SvelteKit gateway in this deployment); browser forwarding headers are dropped. Attempts through one gateway share its limit. Password comparisons use PBKDF2-HMAC-SHA256 and constant-time comparison. The single-owner password is an environment secret, not a multi-user identity system.
 
 SSE carries only refresh/sign-out notifications. Streams recheck session validity on updates and heartbeats, and close on logout/expiry. Financial HTML and API responses are `no-store`. CSP allows only self-hosted scripts and Plaid's official CDN; HTML data is escaped. Provider payloads, credentials and changesets are not logged by application error handlers.
 
@@ -37,7 +37,7 @@ Plaid webhooks require ES256/P-256 signature verification, a matching non-expire
 
 ## Local Sandbox setup
 
-Requirements: Elixir 1.19 / OTP 27, PostgreSQL 16, and Node 24 **for frontend builds only**. Dependencies are locked in `mix.lock` and `frontend/package-lock.json`.
+Requirements: Elixir 1.19 / OTP 27, PostgreSQL 16, and Node 24 for the SvelteKit build and runtime. Dependencies are locked in `mix.lock` and `frontend/package-lock.json`.
 
 1. Export the variables listed in `.env.example` through your secret manager or local shell. Mix does not automatically load `.env`.
 2. Supply separate Plaid **Sandbox** credentials. ChatGPT's Finances connection does not transfer credentials to this app.
@@ -47,14 +47,20 @@ Requirements: Elixir 1.19 / OTP 27, PostgreSQL 16, and Node 24 **for frontend bu
 ```sh
 npm ci --prefix frontend --ignore-scripts
 npm run check --prefix frontend
-npm run build --prefix frontend
+PUBLIC_URL=http://localhost:3000 npm run build --prefix frontend
 mix deps.get --check-locked
 mix ecto.create
 mix ecto.migrate
-mix run --no-halt
+BRIDGE_API_HOST=127.0.0.1 BRIDGE_API_PORT=4000 mix run --no-halt
 ```
 
-Open the configured `PUBLIC_URL` (default `http://localhost:3000`). Sign in and connect a Sandbox institution. `PUBLIC_URL` is a fixed origin, not derived from an incoming Host header. Bind to loopback by default. For deployment, use HTTPS with an appropriately configured reverse proxy, secret management, encrypted database storage/backups and restricted network access. `MIX_ENV=prod` requires an HTTPS origin.
+In a second terminal:
+
+```sh
+BRIDGE_API_ORIGIN=http://127.0.0.1:4000 HOST=127.0.0.1 PORT=3000 npm start --prefix frontend
+```
+
+Build SvelteKit with the same `PUBLIC_URL` used by Ash (a changed origin requires a rebuild). Open the configured `PUBLIC_URL` (default `http://localhost:3000`). Sign in and connect a Sandbox institution. `PUBLIC_URL` is a fixed origin, not derived from an incoming Host header. Bind to loopback by default. For deployment, use HTTPS with an appropriately configured reverse proxy, secret management, encrypted database storage/backups and restricted network access. `MIX_ENV=prod` requires an HTTPS origin.
 
 ## Verification
 
@@ -63,6 +69,10 @@ MIX_ENV=test mix compile --warnings-as-errors
 MIX_ENV=test mix format --check-formatted
 MIX_ENV=test mix hex.audit
 npm audit --prefix frontend --audit-level=moderate
+npm run build:test --prefix frontend
+npm run test:integration --prefix frontend
+npm exec --prefix frontend -- playwright install chromium
+npm run test:browser --prefix frontend
 MIX_ENV=test mix ecto.create
 MIX_ENV=test mix ecto.migrate
 MIX_ENV=test mix test
@@ -70,7 +80,7 @@ MIX_ENV=test mix test
 MIX_ENV=test mix test --no-start test/unit
 ```
 
-The full suite uses PostgreSQL, not an in-memory substitute. CI provides a separate PostgreSQL 16 service. See `docs/validation.md` for actual executed evidence and remaining gates. A successful source build alone does not establish production readiness.
+The Ash suite uses PostgreSQL, not an in-memory substitute. The additional production-Node HTTP/browser contract tests use an explicit deterministic backend fixture and intercepted Plaid SDK; see the deployment guide for their boundaries. CI provides a separate PostgreSQL 16 service. See `docs/sveltekit-validation.md` for actual executed evidence and remaining gates. A successful source build alone does not establish production readiness.
 
 ## Formal methods
 

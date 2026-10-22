@@ -4,7 +4,7 @@ defmodule Bridge.HTTPSecurityTest do
   import Plug.Conn
 
   test "all private read surfaces fail closed before touching PostgreSQL" do
-    for path <- ["/api/snapshot", "/fragment", "/api/events"] do
+    for path <- ["/api/snapshot", "/api/events"] do
       response = conn(:get, path) |> Bridge.Web.Router.call([])
       assert response.status == 401
       assert get_resp_header(response, "cache-control") == ["no-store"]
@@ -42,13 +42,11 @@ defmodule Bridge.HTTPSecurityTest do
     assert response.status == 401
   end
 
-  test "public shell has no financial content or hydrated app and does not initialize SSE" do
+  test "backend does not expose a second frontend or static build artifacts" do
     response = conn(:get, "/") |> Bridge.Web.Router.call([])
-    assert response.status == 200
-    assert response.resp_body =~ ~s(content="")
-    assert response.resp_body =~ ~s(action="/login")
+    assert response.status == 404
     refute response.resp_body =~ ~s(id="finance")
-    refute response.resp_body =~ "import("
+    assert conn(:get, "/bridge.js") |> Bridge.Web.Router.call([]) |> Map.fetch!(:status) == 404
 
     assert get_resp_header(response, "content-security-policy") |> hd() =~
              "frame-ancestors 'none'"

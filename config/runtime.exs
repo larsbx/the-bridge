@@ -25,7 +25,9 @@ if config_env() != :test do
   if config_env() == :prod and uri.scheme != "https", do: raise("Production requires HTTPS")
   env = System.get_env("PLAID_ENV", "sandbox")
   unless env in ["sandbox", "production"], do: raise("Invalid PLAID_ENV")
-  {:ok, host} = :inet.parse_address(String.to_charlist(System.get_env("HOST", "127.0.0.1")))
+
+  {:ok, host} =
+    :inet.parse_address(String.to_charlist(System.get_env("BRIDGE_API_HOST", "127.0.0.1")))
 
   config :bridge, :settings, %{
     password: password,
@@ -33,7 +35,7 @@ if config_env() != :test do
     data_key: data_key,
     origin: origin,
     secure: uri.scheme == "https",
-    port: String.to_integer(System.get_env("PORT", "3000")),
+    port: String.to_integer(System.get_env("BRIDGE_API_PORT", "4000")),
     host: host,
     plaid_env: env,
     client_id: System.fetch_env!("PLAID_CLIENT_ID"),

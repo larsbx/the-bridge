@@ -52,6 +52,21 @@ jobs:
       - run: npm ci --prefix frontend --ignore-scripts
       - run: npm audit --prefix frontend --audit-level=moderate
       - run: npm run check --prefix frontend
-      - run: npm run build --prefix frontend
+      - run: npm run build:test --prefix frontend
+      - run: npm run test:integration --prefix frontend
+      - run: npm exec --prefix frontend -- playwright install --with-deps chromium
+      - run: npm run test:browser --prefix frontend
       - run: mix ecto.create && mix ecto.migrate
       - run: mix test --no-compile
+      - run: mix ecto.create && mix ecto.migrate
+        env:
+          DATABASE_URL: ecto://postgres:postgres@localhost/bridge_browser_test
+      - run: npm run test:browser:ash --prefix frontend
+        env:
+          DATABASE_URL: ecto://postgres:postgres@localhost/bridge_browser_test
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: failure()
+        with:
+          name: browser-failure-evidence
+          path: frontend/test-results
+          if-no-files-found: ignore
