@@ -1,7 +1,6 @@
 defmodule Bridge.Security do
   @moduledoc "Server-only encryption, signed revocable sessions, and session-bound CSRF."
   alias Bridge.Finance.Session
-  require Ash.Query
   @auth %Bridge.Actor{role: :auth}
   def settings, do: Application.fetch_env!(:bridge, :settings)
   def now, do: System.system_time(:second)

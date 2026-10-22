@@ -40,7 +40,6 @@ export function createBackend() {
     catch { return json(400, { error: 'invalid_request' }); }
     if (url.pathname.startsWith('/__test/')) {
       if (url.pathname === '/__test/reset') reset();
-      if (url.pathname === '/__test/large') state.balance = '9007199254740993';
       if (url.pathname === '/__test/change') { state.balance = body.balance || 45678; broadcast(); }
       if (url.pathname === '/__test/drop') for (const stream of state.streams) stream.response.end();
       if (url.pathname === '/__test/revoke') { state.sessions.clear(); broadcast(); }
