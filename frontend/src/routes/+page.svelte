@@ -14,6 +14,9 @@
 <header class="topbar">
   <a class="brand" href="/"><span class="brand-mark">B</span>The Bridge</a>
   <span class="pill">Private · Read-only</span>
+  {#if data.authenticated && data.shipControlURL}
+    <a href={data.shipControlURL} rel="noreferrer">Deployments in Ship</a>
+  {/if}
 </header>
 <main class="page" id="bridge-root">
   {#if data.authenticated}
@@ -26,3 +29,4 @@
   <span>Direct Plaid connection · Encrypted access tokens</span>
   <p class="muted">Balances are the latest available snapshots. They are not a guarantee of available funds or a complete net worth estimate.</p>
 </footer>
+

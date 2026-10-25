@@ -96,6 +96,14 @@ This PR changes the persistence engine. **No automatic SQLite-to-PostgreSQL impo
 
 ## Remaining acceptance gates
 
+Optional Ship connection: set `SHIP_CONTROL_ORIGIN` on the SvelteKit server to
+Ship's independently authenticated control origin. The signed-in dashboard
+shows **Deployments in Ship**. This is a navigation handoff with no finance
+cookies, tokens or deployment credentials forwarded. Ship remains available
+when this application is down. An invalid/missing origin hides the link.
+Ship's first control milestone executes disposable fixtures only; this link
+does not enable Evergreen or authorize deployment of either Bridge process.
+
 This is a review candidate, **not production-ready**. Require green PostgreSQL integration CI, security review and actual Plaid Sandbox evidence (Link, exchange, two Items, repeated sync, signed webhook delivery and relink). Account-ID churn should also be exercised with deterministic fixtures because Sandbox does not guarantee it can simulate every bank behavior.
 
 OAuth redirect/resume, durable sync jobs with retry/backoff, connection removal/token revocation, key rotation, session cleanup, operational recovery, legacy import when applicable and broader deployment controls remain follow-up gates. The current supervised work queue is in memory; startup/15-minute polling recovers missed notices. Long-running pulls occupy a database connection while holding the Item lock; load testing and a durable queue are required before scaling beyond the private single-owner scope.
@@ -109,3 +117,4 @@ USD aggregates exclude unknown/non-USD currencies; no FX conversion is performed
 - [Plaid webhook verification](https://plaid.com/docs/api/webhooks/webhook-verification/)
 - [SvelteKit page options](https://svelte.dev/docs/kit/page-options)
 - [Ash policies](https://ash.hexdocs.pm/policies.html)
+
