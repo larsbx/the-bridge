@@ -193,10 +193,10 @@
       [hex: :stream_data, repo: "hexpm", optional: true]}
    ], "hexpm",
    "ff7d880cf732d82360aa81e439b8d4831cd30768061c9233f90c97e10162b9c0"},
-  plug_crypto: {:hex, :plug_crypto, "2.2.0",
-   "144014737daaf485407f5ed77daeaad74d651b216a28c87543f8cc7043f8efc8", [:mix],
+  plug_crypto: {:hex, :plug_crypto, "2.2.1",
+   "bd1d0358a2e2f5ffb818217e64c394f9d24ed191d862b7fa1bcce264ace2b8ea", [:mix],
    [], "hexpm",
-   "83a95744ab1c75876542b6fab135fcc176280e0f301a111c1f757fddcec95d2c"},
+   "4417ccbd8f85e627321cd07d2ab9c4b621f1fd883b9905af241f9b4b780b94b6"},
   nimble_options: {:hex, :nimble_options, "1.1.1",
    "e3a492d54d85fc3fd7c5baf411d9d2852922f66e69476317787a7b2bb000a61b", [:mix],
    [], "hexpm",
@@ -275,3 +275,4 @@
    ], "hexpm",
    "39028f0b5a21404661410a6c19275060a9822c9dcca70b7c3e4e4fa50b11da58"}
 }
+
