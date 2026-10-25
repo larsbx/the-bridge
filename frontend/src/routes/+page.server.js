@@ -12,7 +12,7 @@ export async function load(event) {
   if (!data) return { authenticated: false };
   return {
     authenticated: true, csrf: session.csrf, snapshot: data,
-    shipControlURL: shipControlURL(env.SHIP_CONTROL_ORIGIN),
+    shipControlURL: shipControlURL(env.SHIP_CONTROL_ORIGIN, env.PUBLIC_URL),
     filters: { account: event.url.searchParams.get('account') || '', q: event.url.searchParams.get('q') || '' }
   };
 }

@@ -98,7 +98,10 @@ This PR changes the persistence engine. **No automatic SQLite-to-PostgreSQL impo
 
 Optional Ship connection: set `SHIP_CONTROL_ORIGIN` on the SvelteKit server to
 Ship's independently authenticated control origin. The signed-in dashboard
-shows **Deployments in Ship**. This is a navigation handoff with no finance
+shows **Deployments in Ship**. Require a distinct hostname from the explicitly
+configured `PUBLIC_URL`, including for local fixtures: cookies cross ports on
+the same hostname. Shared-host or missing-public-origin configurations hide
+the link. This is a navigation handoff with no finance
 cookies, tokens or deployment credentials forwarded. Ship remains available
 when this application is down. An invalid/missing origin hides the link.
 Ship's first control milestone executes disposable fixtures only; this link
