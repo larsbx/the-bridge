@@ -116,7 +116,7 @@ export async function startApp({ backendPort = 0, externalBackendOrigin } = {}) 
   const backendOrigin = externalBackendOrigin || `http://127.0.0.1:${backend.server.address().port}`;
   const child = spawn(process.execPath, ['build'], {
     cwd: fileURLToPath(new URL('../..', import.meta.url)),
-    env: { ...process.env, HOST: '127.0.0.1', PORT: '3173', BRIDGE_API_ORIGIN: backendOrigin, SHUTDOWN_TIMEOUT: '1' },
+    env: { ...process.env, HOST: '127.0.0.1', PORT: '3173', PUBLIC_URL: origin, BRIDGE_API_ORIGIN: backendOrigin, SHUTDOWN_TIMEOUT: '1', SHIP_CONTROL_ORIGIN: 'https://ship.example.test' },
     stdio: ['ignore', 'pipe', 'pipe']
   });
   let output = '';
@@ -141,3 +141,4 @@ export async function startApp({ backendPort = 0, externalBackendOrigin } = {}) 
     throw new Error(`Node server did not become ready: ${output}`);
   } catch (error) { await close(); throw error; }
 }
+

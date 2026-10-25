@@ -2,6 +2,7 @@ import { before, after, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
 import { startApp, origin, password } from './support/app.mjs';
+import { shipControlURL } from '../src/lib/server/ship.js';
 
 let app;
 before(async () => { app = await startApp(); });
@@ -24,6 +25,7 @@ test('public SSR login has no finance, enhancement script, hydration, or placeho
   const response = await request('/');
   const html = await response.text();
   assert.equal(response.status, 200);
+  assert.doesNotMatch(html, /ship\.example\.test|Deployments in Ship/);
   assert.match(html, /action="\/login"/);
   assert.doesNotMatch(html, /id="finance"|BRIDGE_CONTENT|BRIDGE_CSRF|src="\/bridge.js"|import\s*\(|_app\/.*\.js/);
   assert.equal(response.headers.get('cache-control'), 'no-store');
@@ -38,6 +40,7 @@ test('native login forwards cookie protections; authenticated Svelte SSR escapes
   const html = await response.text();
   assert.equal(response.status, 200);
   assert.match(html, /id="finance"/);
+  assert.match(html, /href="https:\/\/ship\.example\.test\/" rel="noreferrer">Deployments in Ship/);
   assert.match(html, /USD 123\.45/);
   assert.match(html, /&lt;img/);
   assert.doesNotMatch(html, /<img src=x|encrypted_token|access-sandbox|BRIDGE_CONTENT|_app\/.*\.js|import\s*\(/);
@@ -47,6 +50,21 @@ test('native login forwards cookie protections; authenticated Svelte SSR escapes
   const fragment = await request('/fragment?month=2026-08', { headers: { cookie } });
   assert.match(await fragment.text(), /2026-08-01/);
   assert.equal(fragment.headers.get('cache-control'), 'no-store');
+});
+
+test('Ship handoff accepts only configured origins and never carries finance credentials', () => {
+  const bridge = 'https://bridge.example.test:3000';
+  assert.equal(shipControlURL('https://ship.example.test', bridge), 'https://ship.example.test/');
+  assert.equal(shipControlURL('http://127.0.0.1:8787', 'http://localhost:3000'), 'http://127.0.0.1:8787/');
+  for (const value of [undefined, '', 'javascript:alert(1)', 'http://remote.example',
+    'https://user:password@ship.example', 'https://ship.example/deploy',
+    'https://ship.example/?token=secret', 'https://ship.example/#secret']) assert.equal(shipControlURL(value, bridge), null);
+  for (const value of ['https://bridge.example.test:8787', 'https://BRIDGE.example.test',
+    'https://bridge.example.test.:8787']) assert.equal(shipControlURL(value, bridge), null);
+  assert.equal(shipControlURL('http://127.0.0.1:8787', 'http://127.0.0.1:3173'), null);
+  assert.equal(shipControlURL('http://localhost:8787', 'http://localhost:3000'), null);
+  assert.equal(shipControlURL('https://ship.example.test'), null);
+  assert.equal(shipControlURL('https://ship.example.test', 'invalid'), null);
 });
 
 test('private snapshot, fragment, and SSE reject forged and missing cookies', async () => {
@@ -154,3 +172,4 @@ test('cent strings render exactly beyond the JavaScript safe-integer range', asy
   assert.match(html, /USD 90071992547409\.93/);
   assert.doesNotMatch(html, /90071992547409\.92/);
 });
+
